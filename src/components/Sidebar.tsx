@@ -110,8 +110,14 @@ const Sidebar: React.FC = () => {
         <div className="flex flex-col h-full">
           {/* Logo and header */}
           <div className="p-6 border-b">
-            <h1 className="text-2xl font-bold text-primary animate-fade-in">EduTrack</h1>
-            <p className="text-sm text-muted-foreground animate-fade-in">Student Record System</p>
+            <div className="flex justify-center mb-2">
+              <img 
+                src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
+                alt="StudentHub" 
+                className="h-8 object-contain"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground text-center animate-fade-in">Student Record System</p>
           </div>
 
           {/* User info */}

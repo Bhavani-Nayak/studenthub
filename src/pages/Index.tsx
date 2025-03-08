@@ -66,7 +66,13 @@ const Index = () => {
       <div className="animate-scale-in">
         <Card className="w-[380px] shadow-lg border-opacity-50">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl font-bold text-center">EduTrack</CardTitle>
+            <div className="flex justify-center">
+              <img 
+                src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
+                alt="StudentHub" 
+                className="h-12 object-contain mx-auto"
+              />
+            </div>
             <CardDescription className="text-center">
               Login to access the student management system
             </CardDescription>

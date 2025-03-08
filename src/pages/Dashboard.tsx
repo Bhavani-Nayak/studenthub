@@ -55,7 +55,14 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <img 
+          src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
+          alt="StudentHub" 
+          className="h-8 object-contain"
+        />
+      </div>
       
       {/* Overview Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
