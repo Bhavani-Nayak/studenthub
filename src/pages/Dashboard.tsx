@@ -1,10 +1,12 @@
 
 import React from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CalendarIcon, GraduationCapIcon, UsersIcon, BookOpenIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import StatsCards from '@/components/dashboard/StatsCards';
+import QuickAccessCards from '@/components/dashboard/QuickAccessCards';
+import AdminCharts from '@/components/dashboard/AdminCharts';
+import StudentCharts from '@/components/dashboard/StudentCharts';
 
 // Mock data for the dashboard
 const OVERVIEW_STATS = {
@@ -28,23 +30,6 @@ const OVERVIEW_STATS = {
   ]
 };
 
-// Chart data for admin view
-const PERFORMANCE_DATA = [
-  { name: 'CS101', average: 87 },
-  { name: 'PHYS201', average: 79 },
-  { name: 'MATH150', average: 82 },
-  { name: 'BIO110', average: 91 },
-];
-
-// Attendance pie chart data
-const ATTENDANCE_DATA = [
-  { name: 'Present', value: 87 },
-  { name: 'Absent', value: 13 },
-];
-
-// Colors for the pie chart
-const COLORS = ['#4CAF50', '#F44336'];
-
 const Dashboard = () => {
   const { user } = useAuth();
   
@@ -55,155 +40,19 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <img 
-          src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
-          alt="StudentHub" 
-          className="h-8 object-contain"
-        />
-      </div>
+      <DashboardHeader title="Dashboard" />
       
       {/* Overview Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.color}`}>
-                {stat.icon}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <StatsCards stats={stats} />
       
       {/* Quick Access Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Link to="/students">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-32">
-              <UsersIcon className="h-8 w-8 mb-2 text-blue-500" />
-              <h3 className="font-medium">Student Records</h3>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/attendance">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-32">
-              <CalendarIcon className="h-8 w-8 mb-2 text-green-500" />
-              <h3 className="font-medium">Attendance</h3>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/performance">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-32">
-              <GraduationCapIcon className="h-8 w-8 mb-2 text-amber-500" />
-              <h3 className="font-medium">Performance</h3>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/courses">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-32">
-              <BookOpenIcon className="h-8 w-8 mb-2 text-purple-500" />
-              <h3 className="font-medium">Courses & Timetable</h3>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+      <QuickAccessCards />
       
       {/* Charts - Only show detailed analytics for admin and faculty */}
-      {(user.role === 'admin' || user.role === 'faculty') && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Performance</CardTitle>
-              <CardDescription>Average grades across courses</CardDescription>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={PERFORMANCE_DATA}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="average" fill="#4CAF50" name="Average Grade" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendance Overview</CardTitle>
-              <CardDescription>Present vs. absent statistics</CardDescription>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={ATTENDANCE_DATA}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {ATTENDANCE_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {(user.role === 'admin' || user.role === 'faculty') && <AdminCharts />}
       
       {/* For student role, show a different view */}
-      {user.role === 'student' && (
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Academic Progress</CardTitle>
-              <CardDescription>Course performance this semester</CardDescription>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    { name: 'CS101', grade: 92 },
-                    { name: 'PHYS201', grade: 78 },
-                    { name: 'MATH150', grade: 88 },
-                    { name: 'BIO110', grade: 85 },
-                  ]}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="grade" fill="#4CAF50" name="Your Grade" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {user.role === 'student' && <StudentCharts />}
     </div>
   );
 };

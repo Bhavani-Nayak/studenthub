@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ const Index = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
   React.useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
@@ -41,7 +39,6 @@ const Index = () => {
     }
   };
 
-  // Quick login for demo purposes
   const quickLogin = async (role: 'admin' | 'faculty' | 'student') => {
     setLoading(true);
     let email;
@@ -70,7 +67,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
                 alt="StudentHub" 
-                className="h-12 object-contain mx-auto"
+                className="h-40 object-contain mx-auto"
               />
             </div>
             <CardDescription className="text-center">

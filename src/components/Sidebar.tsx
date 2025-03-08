@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth, UserRole } from './AuthContext';
@@ -56,30 +55,23 @@ const Sidebar: React.FC = () => {
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => isMobile && setIsOpen(false);
 
-  // Define menu items based on user role
   const getMenuItems = (role: UserRole) => {
     const items = [
       { icon: Home, label: 'Dashboard', href: '/dashboard', roles: ['admin', 'faculty', 'student'] },
     ];
 
-    // Only admins can access user management
     if (role === 'admin') {
       items.push({ icon: Users, label: 'User Management', href: '/users', roles: ['admin'] });
     }
 
-    // Student data management - different access for different roles
     items.push({ icon: GraduationCap, label: 'Students', href: '/students', roles: ['admin', 'faculty', 'student'] });
     
-    // All roles can access attendance but with different permissions
     items.push({ icon: ClipboardCheck, label: 'Attendance', href: '/attendance', roles: ['admin', 'faculty', 'student'] });
     
-    // All roles can access performance but with different permissions
     items.push({ icon: BarChart3, label: 'Performance', href: '/performance', roles: ['admin', 'faculty', 'student'] });
     
-    // All roles can access courses but with different permissions
     items.push({ icon: BookOpen, label: 'Courses', href: '/courses', roles: ['admin', 'faculty', 'student'] });
 
-    // Filter items based on user role
     return items.filter(item => item.roles.includes(role));
   };
 
@@ -87,7 +79,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile toggle button */}
       {isMobile && (
         <Button 
           variant="ghost" 
@@ -99,7 +90,6 @@ const Sidebar: React.FC = () => {
         </Button>
       )}
 
-      {/* Sidebar */}
       <div 
         className={cn(
           'fixed left-0 top-0 h-full bg-card border-r z-40 transition-all duration-300 ease-in-out shadow-lg',
@@ -108,19 +98,17 @@ const Sidebar: React.FC = () => {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo and header */}
           <div className="p-6 border-b">
             <div className="flex justify-center mb-2">
               <img 
                 src="/lovable-uploads/74823540-2e67-496a-8656-b0ab67bfbdf7.png" 
                 alt="StudentHub" 
-                className="h-8 object-contain"
+                className="h-40 object-contain"
               />
             </div>
             <p className="text-sm text-muted-foreground text-center animate-fade-in">Student Record System</p>
           </div>
 
-          {/* User info */}
           <div className="p-4 border-b flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={`https://avatar.vercel.sh/${user.id}`} />
@@ -132,7 +120,6 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation links */}
           <nav className="flex-1 overflow-y-auto p-3 space-y-2">
             {items.map((item) => (
               <SidebarItem
@@ -146,7 +133,6 @@ const Sidebar: React.FC = () => {
             ))}
           </nav>
 
-          {/* Logout button */}
           <div className="p-4 border-t">
             <Button 
               variant="outline" 
@@ -160,7 +146,6 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Backdrop for mobile */}
       {isMobile && isOpen && (
         <div 
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30" 
