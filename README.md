@@ -1,69 +1,139 @@
-# Welcome to your Lovable project
 
-## Project info
+# StudentHub - Educational Management System
+
+## Project Overview
+
+StudentHub is a comprehensive educational management system designed to help administrators, faculty, and students track academic progress, attendance, and course information. The platform provides intuitive dashboards with visualizations and data management tools for the entire educational ecosystem.
+
+## Live Demo
 
 **URL**: https://lovable.dev/projects/9d1ef81c-754a-42a9-b15a-9867ec192ac8
 
-## How can I edit this code?
+## Project Structure
 
-There are several ways of editing your application.
+```
+student-track-compass/
+├── public/                 # Static assets
+│   ├── lovable-uploads/    # Uploaded images and files
+│   └── og-image.png        # Open Graph image for social sharing
+├── src/
+│   ├── components/         # React components
+│   │   ├── dashboard/      # Dashboard-specific components
+│   │   ├── ui/             # UI components from shadcn/ui
+│   │   ├── AuthContext.tsx # Authentication context provider
+│   │   ├── DashboardLayout.tsx # Layout wrapper for dashboard pages
+│   │   ├── PrivateRoute.tsx    # Route protection component
+│   │   └── Sidebar.tsx     # Navigation sidebar component
+│   ├── hooks/              # Custom React hooks
+│   │   ├── use-mobile.tsx  # Hook for responsive design
+│   │   └── use-toast.ts    # Toast notification hook
+│   ├── lib/                # Utility libraries
+│   │   └── utils.ts        # General utility functions
+│   ├── pages/              # Application pages
+│   │   ├── Index.tsx       # Landing/login page
+│   │   ├── Dashboard.tsx   # Main dashboard
+│   │   ├── StudentData.tsx # Student information management
+│   │   ├── Attendance.tsx  # Attendance tracking
+│   │   ├── Performance.tsx # Academic performance metrics
+│   │   ├── Courses.tsx     # Course management
+│   │   ├── Users.tsx       # User management (admin only)
+│   │   └── NotFound.tsx    # 404 page
+│   ├── App.tsx             # Main application component
+│   ├── index.css           # Global styles
+│   └── main.tsx            # Application entry point
+├── tailwind.config.ts      # Tailwind CSS configuration
+├── vite.config.ts          # Vite build configuration
+├── tsconfig.json           # TypeScript configuration
+└── package.json            # Dependencies and scripts
+```
 
-**Use Lovable**
+## Technologies & Dependencies
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9d1ef81c-754a-42a9-b15a-9867ec192ac8) and start prompting.
+### Core Framework & Build Tools
 
-Changes made via Lovable will be committed automatically to this repo.
+- **React**: The frontend library for building user interfaces
+- **TypeScript**: Provides type safety to enhance code quality and developer experience
+- **Vite**: Fast and efficient build tool for modern web applications
 
-**Use your preferred IDE**
+### Routing & Navigation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **react-router-dom**: Handles client-side routing between different pages
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### UI Components & Styling
 
-Follow these steps:
+- **Tailwind CSS**: Utility-first CSS framework for rapidly building custom user interfaces
+- **shadcn/ui**: A collection of accessible and customizable UI components built on Radix UI
+- **Radix UI**: Low-level, accessible UI primitives for building high-quality components
+- **Lucide React**: Modern icon library with clean, consistent designs
+- **class-variance-authority**: Utility for creating variant-based component styles
+- **clsx** & **tailwind-merge**: Tools for conditionally joining class names and resolving conflicts
+
+### Data Visualization
+
+- **Recharts**: Composable charting library built on React components for visualizing student performance and attendance data
+
+### State Management & Data Fetching
+
+- **@tanstack/react-query**: Powerful data synchronization library for fetching, caching, and updating data
+
+### Forms & Validation
+
+- **React Hook Form**: Performant, flexible forms with easy validation
+- **Zod**: TypeScript-first schema validation library
+
+### Date & Time Handling
+
+- **date-fns**: Modern JavaScript date utility library
+
+### Toast Notifications
+
+- **sonner**: Lightweight, customizable toast notification system
+
+### Animations & Transitions
+
+- **tailwindcss-animate**: Animation utilities for Tailwind CSS
+- **Vaul**: Modal and drawer animations
+
+## Authentication & Authorization
+
+The application implements a role-based access control system with three user types:
+- **Admin**: Full access to all features, including user management
+- **Faculty**: Access to student data, attendance, performance metrics, and courses
+- **Student**: Limited access to personal performance data and course information
+
+Authentication is currently implemented using mock data for demonstration purposes, with plans to integrate with backend services in future iterations.
+
+## Key Features
+
+1. **Role-based Dashboards**: Different views for administrators, faculty, and students
+2. **Academic Performance Tracking**: Visualizations of student grades and progress
+3. **Attendance Management**: Track and report student attendance 
+4. **Course Management**: Information about courses, schedules, and materials
+5. **Student Records**: Comprehensive student information database
+6. **User Management**: Administrative controls for user accounts and permissions
+
+## Development
+
+To develop this project locally:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application can be deployed directly from Lovable by clicking on Share -> Publish, or by exporting the codebase to GitHub and using your preferred hosting service.
 
-**Use GitHub Codespaces**
+## Custom Domain
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/9d1ef81c-754a-42a9-b15a-9867ec192ac8) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+For custom domain deployment, Netlify is recommended. Please refer to [our documentation](https://docs.lovable.dev/tips-tricks/custom-domain/) for detailed instructions.
