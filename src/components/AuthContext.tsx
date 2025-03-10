@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -23,6 +22,7 @@ const MOCK_USERS: User[] = [
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -30,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => false,
+  register: async () => false,
   logout: () => {},
   isAuthenticated: false
 });
@@ -84,6 +85,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return false;
   };
 
+  const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
+    // Mock registration - in a real app, this would call an API
+    const existingUser = MOCK_USERS.find(user => user.email === email);
+    
+    if (existingUser) {
+      toast({
+        title: "Registration failed",
+        description: "Email already exists",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    const newUser: User = {
+      id: (MOCK_USERS.length + 1).toString(),
+      name,
+      email,
+      role
+    };
+    
+    MOCK_USERS.push(newUser);
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    
+    toast({
+      title: "Registration successful",
+      description: `Welcome, ${name}!`,
+    });
+    
+    navigate('/dashboard');
+    return true;
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
@@ -99,6 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     login,
+    register,
     logout,
     isAuthenticated: !!user
   };
