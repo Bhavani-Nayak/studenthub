@@ -1,8 +1,8 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
-// User types
 export type UserRole = 'admin' | 'faculty' | 'student';
 
 export interface User {
@@ -12,13 +12,6 @@ export interface User {
   role: UserRole;
 }
 
-// Mock user data
-const MOCK_USERS: User[] = [
-  { id: '1', name: 'Admin User', email: 'admin@example.com', role: 'admin' },
-  { id: '2', name: 'Faculty Member', email: 'faculty@example.com', role: 'faculty' },
-  { id: '3', name: 'Student One', email: 'student@example.com', role: 'student' }
-];
-
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
@@ -26,6 +19,8 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
 }
+
+const API_URL = 'http://localhost:5000/api';
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -43,83 +38,99 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
-  // Check if user is already logged in from localStorage
   useEffect(() => {
+    const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in a real app, this would call an API
-    const foundUser = MOCK_USERS.find(user => user.email === email);
-    
-    if (foundUser && password === 'password') { // Simple password check for demo
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
-      
-      // Show success message
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       toast({
         title: "Login successful",
-        description: `Welcome back, ${foundUser.name}`,
+        description: `Welcome back, ${data.user.name}`,
       });
-      
-      // Redirect to dashboard
+
       navigate('/dashboard');
       return true;
-    }
-    
-    // Show error message
-    toast({
-      title: "Login failed",
-      description: "Invalid email or password",
-      variant: "destructive",
-    });
-    
-    return false;
-  };
-
-  const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
-    // Mock registration - in a real app, this would call an API
-    const existingUser = MOCK_USERS.find(user => user.email === email);
-    
-    if (existingUser) {
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "Registration failed",
-        description: "Email already exists",
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Invalid credentials",
         variant: "destructive",
       });
       return false;
     }
-    
-    const newUser: User = {
-      id: (MOCK_USERS.length + 1).toString(),
-      name,
-      email,
-      role
-    };
-    
-    MOCK_USERS.push(newUser);
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    toast({
-      title: "Registration successful",
-      description: `Welcome, ${name}!`,
-    });
-    
-    navigate('/dashboard');
-    return true;
+  };
+
+  const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      toast({
+        title: "Registration successful",
+        description: `Welcome, ${data.user.name}!`,
+      });
+
+      navigate('/dashboard');
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "Registration failed",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     
     toast({
