@@ -20,6 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+// Use API_URL that will work with the Lovable preview
 const API_URL = 'http://localhost:5000/api';
 
 const AuthContext = createContext<AuthContextType>({
@@ -54,6 +55,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('Sending login request to:', `${API_URL}/auth/login`);
+      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -62,10 +65,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message);
+        throw new Error(data.message || 'Login failed');
       }
 
       setUser(data.user);
@@ -92,6 +96,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
     try {
+      console.log('Sending registration request to:', `${API_URL}/auth/register`);
+      console.log('Registration data:', { name, email, role });
+      
+      // During development, if the backend is not available, you can use this to bypass it
+      // In production, uncomment the fetch call below and remove this mock logic
+      /*
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Mock registration in development mode');
+        const mockUser = { id: '123', name, email, role };
+        setUser(mockUser);
+        localStorage.setItem('token', 'mock-token');
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        
+        toast({
+          title: "Registration successful (Dev Mode)",
+          description: `Welcome, ${name}!`,
+        });
+        
+        navigate('/dashboard');
+        return true;
+      }
+      */
+
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -100,10 +127,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ name, email, password, role }),
       });
 
+      console.log('Registration response status:', response.status);
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message);
+        throw new Error(data.message || 'Registration failed');
       }
 
       setUser(data.user);

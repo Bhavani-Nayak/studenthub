@@ -9,6 +9,8 @@ const User = require('../models/User');
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    
+    console.log('Registration request received:', { name, email, role });
 
     // Check if user already exists
     let user = await User.findOne({ email });
@@ -29,6 +31,7 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    console.log('User created successfully', user._id);
 
     // Create JWT token
     const token = jwt.sign(
@@ -47,7 +50,7 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -56,6 +59,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login request received:', { email });
 
     // Check if user exists
     const user = await User.findOne({ email });
@@ -69,6 +73,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    console.log('User logged in successfully', user._id);
+    
     // Create JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -86,7 +92,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
