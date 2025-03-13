@@ -38,7 +38,7 @@ mongoose.connect(process.env.MONGODB_URI)
   })
   .catch((error) => {
     console.error('❌ MongoDB connection error:', error);
-    // Don't exit the process, let it handle requests with appropriate errors
+    process.exit(1);
   });
 
 // Routes
@@ -57,5 +57,5 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 MongoDB URI: ${process.env.MONGODB_URI.substring(0, 20)}...`);
+  console.log(`📁 MongoDB URI connected`);
 });
