@@ -22,8 +22,8 @@ interface AuthContextType {
 
 // Use API_URL that will work with Lovable's preview and be ready for deployment
 const API_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api' 
-  : '/api'; // This will use relative path when deployed
+  ? 'http://localhost:5000' 
+  : ''; // Use relative URL in production
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -57,9 +57,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log('Sending login request to:', `${API_URL}/auth/login`);
+      const apiUrl = `${API_URL}/api/auth/login`;
+      console.log('Sending login request to:', apiUrl);
       
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,10 +107,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
     try {
-      console.log('Sending registration request to:', `${API_URL}/auth/register`);
+      const apiUrl = `${API_URL}/api/auth/register`;
+      console.log('Sending registration request to:', apiUrl);
       console.log('Registration data:', { name, email, role });
       
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
