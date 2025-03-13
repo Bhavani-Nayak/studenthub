@@ -68,11 +68,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       console.log('Login response status:', response.status);
-      const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        throw new Error(errorMessage);
       }
+      
+      const data = await response.json();
 
       setUser(data.user);
       localStorage.setItem('token', data.token);
@@ -110,11 +118,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       console.log('Registration response status:', response.status);
-      const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        throw new Error(errorMessage);
       }
+      
+      const data = await response.json();
 
       setUser(data.user);
       localStorage.setItem('token', data.token);
