@@ -20,12 +20,19 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-// For Lovable sandbox testing, we need to point to the deployed backend
-// In a real deployment, you'd use a relative URL or environment variable
-const API_URL = 'https://studenthub-backend.onrender.com';
+// Mock users for local authentication
+const MOCK_USERS: User[] = [
+  { id: '1', name: 'Admin User', email: 'admin@example.com', role: 'admin' },
+  { id: '2', name: 'Faculty User', email: 'faculty@example.com', role: 'faculty' },
+  { id: '3', name: 'Student User', email: 'student@example.com', role: 'student' }
+];
 
-// Use console log to debug the API URL being used
-console.log('Using API URL:', API_URL);
+// Mock credentials (in a real app, this would be stored securely)
+const MOCK_CREDENTIALS = {
+  'admin@example.com': 'password123',
+  'faculty@example.com': 'password123',
+  'student@example.com': 'password123'
+};
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -44,54 +51,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Load user from localStorage on initial load
     const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
+    if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('user');
-        localStorage.removeItem('token');
       }
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const apiUrl = `${API_URL}/api/auth/login`;
-      console.log('Sending login request to:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log('Login response status:', response.status);
-      
-      if (!response.ok) {
-        let errorMessage = 'Login failed';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-        }
-        throw new Error(errorMessage);
+      // Check if email exists in mock credentials
+      if (!MOCK_CREDENTIALS.hasOwnProperty(email)) {
+        throw new Error('User not found');
       }
-      
-      const data = await response.json();
 
-      setUser(data.user);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Check if password matches
+      if (MOCK_CREDENTIALS[email as keyof typeof MOCK_CREDENTIALS] !== password) {
+        throw new Error('Invalid password');
+      }
+
+      // Find the user with matching email
+      const foundUser = MOCK_USERS.find(u => u.email === email);
+      
+      if (!foundUser) {
+        throw new Error('User not found');
+      }
+
+      // Set the user in state and localStorage
+      setUser(foundUser);
+      localStorage.setItem('user', JSON.stringify(foundUser));
 
       toast({
         title: "Login successful",
-        description: `Welcome back, ${data.user.name}`,
+        description: `Welcome back, ${foundUser.name}`,
       });
 
       navigate('/dashboard');
@@ -109,40 +106,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
     try {
-      const apiUrl = `${API_URL}/api/auth/register`;
-      console.log('Sending registration request to:', apiUrl);
-      console.log('Registration data:', { name, email, role });
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, role }),
-      });
-
-      console.log('Registration response status:', response.status);
-      
-      if (!response.ok) {
-        let errorMessage = 'Registration failed';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-        }
-        throw new Error(errorMessage);
+      // Check if email already exists
+      if (MOCK_CREDENTIALS.hasOwnProperty(email) || MOCK_USERS.some(u => u.email === email)) {
+        throw new Error('User with this email already exists');
       }
-      
-      const data = await response.json();
 
-      setUser(data.user);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Create a new user object
+      const newUser: User = {
+        id: `user_${Date.now()}`, // Generate a simple ID
+        name,
+        email,
+        role
+      };
+
+      // Add the user to mock data (in a real app, this would add to the database)
+      // Note: This is only in memory and will reset on page refresh
+      // In a production app, you'd want to persist these changes
+      MOCK_USERS.push(newUser);
+      (MOCK_CREDENTIALS as any)[email] = password;
+
+      // Set the user in state and localStorage
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
 
       toast({
         title: "Registration successful",
-        description: `Welcome, ${data.user.name}!`,
+        description: `Welcome, ${name}!`,
       });
 
       navigate('/dashboard');
@@ -160,7 +149,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     
     toast({
