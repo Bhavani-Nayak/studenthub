@@ -20,10 +20,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-// Use API_URL that will work with Lovable's preview and be ready for deployment
-const API_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000' 
-  : ''; // Use relative URL in production
+// For Lovable sandbox testing, we need to point to the deployed backend
+// In a real deployment, you'd use a relative URL or environment variable
+const API_URL = 'https://studenthub-backend.onrender.com';
+
+// Use console log to debug the API URL being used
+console.log('Using API URL:', API_URL);
 
 const AuthContext = createContext<AuthContextType>({
   user: null,

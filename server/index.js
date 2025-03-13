@@ -11,9 +11,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configure CORS
+// Configure CORS to allow requests from Lovable's preview domain
 app.use(cors({
-  origin: '*', // Allow all origins in development
+  origin: '*', // Allow all origins for development and testing
   credentials: true
 }));
 
@@ -41,7 +41,7 @@ mongoose.connect(process.env.MONGODB_URI)
     process.exit(1);
   });
 
-// Routes
+// Routes - make sure the path is just /api/auth
 app.use('/api/auth', authRoutes);
 
 // Error handling middleware
