@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { UserRole } from './AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
   const [name, setName] = useState('');
@@ -25,6 +27,7 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
   const [role, setRole] = useState<UserRole>('student');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +54,10 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
     setLoading(true);
     
     try {
-      await register(name, email, password, role);
+      const success = await register(name, email, password, role);
+      if (success) {
+        setRegistrationSuccess(true);
+      }
     } catch (error) {
       console.error('Signup error:', error);
       toast({
@@ -63,6 +69,41 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
       setLoading(false);
     }
   };
+
+  if (registrationSuccess) {
+    return (
+      <Card className="w-[380px] shadow-lg border-opacity-50">
+        <CardHeader className="space-y-2">
+          <div className="flex justify-center">
+            <img 
+              src="/lovable-uploads/34960ea5-f71c-4260-85c5-2a45a34637c1.png" 
+              alt="StudentHub" 
+              className="h-40 object-contain mx-auto"
+            />
+          </div>
+          <CardTitle className="text-2xl text-center text-green-600 flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-6 w-6" />
+            Registration Successful
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Alert className="mb-4">
+            <AlertDescription>
+              Please check your email to verify your account. A verification link has been sent to <span className="font-medium">{email}</span>.
+            </AlertDescription>
+          </Alert>
+          <p className="text-sm text-muted-foreground mt-4">
+            After verifying your email, you'll be automatically redirected to the dashboard.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="outline" onClick={onToggleForm}>
+            Return to Login
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-[380px] shadow-lg border-opacity-50">
@@ -90,6 +131,7 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -101,6 +143,7 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -112,6 +155,7 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -123,11 +167,12 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
+            <Select value={role} onValueChange={(value: UserRole) => setRole(value)} disabled={loading}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
@@ -143,6 +188,7 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               id="terms" 
               checked={agreeTerms}
               onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
+              disabled={loading}
             />
             <label
               htmlFor="terms"
@@ -152,14 +198,21 @@ const SignupForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
             </label>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign up'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing up...
+              </>
+            ) : (
+              'Sign up'
+            )}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-center">
           Already have an account?{' '}
-          <Button variant="link" className="p-0" onClick={onToggleForm}>
+          <Button variant="link" className="p-0" onClick={onToggleForm} disabled={loading}>
             Sign in
           </Button>
         </div>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -56,6 +57,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user ID:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -67,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
+      console.log('Profile fetched successfully:', data);
       return data as UserProfile;
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -77,111 +81,162 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshProfile = async () => {
     if (!user) return;
     
+    console.log('Refreshing profile for user ID:', user.id);
     const profile = await fetchProfile(user.id);
     if (profile) {
+      console.log('Setting profile:', profile);
       setProfile(profile);
+    } else {
+      console.warn('Profile refresh failed - no data returned');
     }
   };
 
   const handleEmailVerificationRedirect = async () => {
     try {
+      // Check if we're handling a redirect with tokens from email verification
       const url = new URL(window.location.href);
+      
+      // Look for tokens in URL parameters
       const accessToken = url.searchParams.get('access_token');
       const refreshToken = url.searchParams.get('refresh_token');
       const type = url.searchParams.get('type');
       
-      const verificationTypes = ['email_change', 'signup', 'recovery', 'invite'];
+      const verificationTypes = ['email_change', 'signup', 'recovery', 'invite', 'magiclink'];
       
       if (accessToken && refreshToken && type && verificationTypes.includes(type)) {
+        console.log('Detected email verification redirect with type:', type);
         setIsLoading(true);
         
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-        
-        if (error) {
-          console.error('Email verification error:', error);
+        try {
+          // Exchange tokens for session
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Email verification error:', error);
+            toast({
+              title: "Verification Failed",
+              description: error.message || "Unable to complete email verification",
+              variant: "destructive"
+            });
+            
+            // Even on error, clean URL and navigate to home
+            window.history.replaceState({}, document.title, window.location.pathname);
+            navigate('/');
+          } else if (data?.session) {
+            console.log('Email verification successful, setting session');
+            
+            // Important: wait for the session to be set
+            setSession(data.session);
+            setUser(data.session.user);
+            
+            // Wait a moment for the session to be fully processed
+            setTimeout(async () => {
+              if (data.session?.user?.id) {
+                const userProfile = await fetchProfile(data.session.user.id);
+                if (userProfile) {
+                  setProfile(userProfile);
+                  console.log('Profile loaded after email verification');
+                }
+                
+                toast({
+                  title: "Email Verified",
+                  description: "Your email has been successfully verified. Welcome!",
+                });
+                
+                // Clean up URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Always navigate to dashboard, even if profile isn't found
+                navigate('/dashboard');
+              }
+            }, 500);
+          }
+        } catch (e) {
+          console.error('Error processing verification tokens:', e);
           toast({
-            title: "Verification Failed",
-            description: error.message || "Unable to complete email verification",
+            title: "Verification Error",
+            description: "An error occurred while processing your verification. Please try again.",
             variant: "destructive"
           });
           
           navigate('/');
-        } else if (data?.session) {
-          toast({
-            title: "Email Verified",
-            description: "Your email has been successfully verified",
-          });
-          
-          window.history.replaceState({}, document.title, window.location.pathname);
-          
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 500);
         }
+        
+        return true; // Indicate we handled a verification redirect
       }
     } catch (error) {
       console.error('Unexpected error during email verification:', error);
-      toast({
-        title: "Verification Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
     }
+    
+    return false; // No verification redirect handled
   };
 
   useEffect(() => {
-    handleEmailVerificationRedirect();
+    let didHandleVerification = false;
+    
+    // First try to handle email verification redirects
+    handleEmailVerificationRedirect().then(handled => {
+      didHandleVerification = handled;
+      
+      if (!handled) {
+        // Only proceed with normal auth flow if not handling a verification
+        initializeAuth();
+      }
+    });
+    
+    function initializeAuth() {
+      console.log('Initializing auth state');
+      
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log('Auth state changed:', event);
+          setSession(session);
+          setUser(session?.user ?? null);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event);
+          if (session?.user) {
+            // Use setTimeout to avoid any auth state deadlocks
+            setTimeout(async () => {
+              const profile = await fetchProfile(session.user.id);
+              setProfile(profile);
+              setIsLoading(false);
+            }, 0);
+          } else {
+            setProfile(null);
+            setIsLoading(false);
+          }
+        }
+      );
+
+      // Then check for existing session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('Initial session check:', session ? 'Session found' : 'No session');
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          setTimeout(async () => {
-            const profile = await fetchProfile(session.user.id);
+          fetchProfile(session.user.id).then(profile => {
             setProfile(profile);
             setIsLoading(false);
-          }, 0);
+          });
         } else {
-          setProfile(null);
           setIsLoading(false);
         }
+      });
 
-        if (event) {
-          const logData = {
-            event,
-            user_id: session?.user?.id,
-            timestamp: new Date().toISOString()
-          };
-          console.log('Auth event logged:', logData);
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        fetchProfile(session.user.id).then(profile => {
-          setProfile(profile);
-          setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+    
+    // Only call initializeAuth immediately if we're not handling verification
+    if (!didHandleVerification) {
+      const cleanup = initializeAuth();
+      return cleanup;
+    }
   }, [navigate]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -240,6 +295,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log(`Registering user: ${email} with role: ${role}`);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -249,6 +305,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             name,
             role,
           },
+          // Explicitly set the redirect URL
+          emailRedirectTo: window.location.origin,
         },
       });
 
@@ -266,9 +324,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data.user) {
         toast({
           title: "Registration successful",
-          description: role === 'admin' 
-            ? "Your admin account has been created." 
-            : "Your account has been created and is pending admin approval.",
+          description: "Please check your email to verify your account.",
         });
         
         console.log('User registered:', {
@@ -278,7 +334,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           timestamp: new Date().toISOString()
         });
         
-        navigate('/dashboard');
+        // Don't navigate on registration - user needs to verify email first
+        setIsLoading(false);
         return true;
       }
       
