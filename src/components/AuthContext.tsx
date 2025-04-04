@@ -54,7 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Helper function to fetch user profile
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -75,7 +74,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Refresh user profile data
   const refreshProfile = async () => {
     if (!user) return;
     
@@ -85,70 +83,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Handle email verification redirects
   const handleEmailVerificationRedirect = async () => {
-    // Check if this is a redirect after email verification
-    const url = new URL(window.location.href);
-    const accessToken = url.searchParams.get('access_token');
-    const refreshToken = url.searchParams.get('refresh_token');
-    const type = url.searchParams.get('type');
-    
-    if (type === 'email_change' || type === 'signup' || type === 'recovery') {
-      setIsLoading(true);
+    try {
+      const url = new URL(window.location.href);
+      const accessToken = url.searchParams.get('access_token');
+      const refreshToken = url.searchParams.get('refresh_token');
+      const type = url.searchParams.get('type');
       
-      if (accessToken && refreshToken) {
-        try {
-          // Exchange the tokens for a session
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+      const verificationTypes = ['email_change', 'signup', 'recovery', 'invite'];
+      
+      if (accessToken && refreshToken && type && verificationTypes.includes(type)) {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        
+        if (error) {
+          console.error('Email verification error:', error);
+          toast({
+            title: "Verification Failed",
+            description: error.message || "Unable to complete email verification",
+            variant: "destructive"
           });
           
-          if (error) {
-            console.error('Error setting session after email verification:', error);
-            toast({
-              title: "Verification error",
-              description: error.message,
-              variant: "destructive",
-            });
-          } else if (data?.session) {
-            toast({
-              title: "Email verified",
-              description: "Your email has been verified successfully",
-            });
-            
-            // Clear URL parameters to avoid issues on refresh
-            window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Redirect to dashboard after short delay to allow session to propagate
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 500);
-          }
-        } catch (error) {
-          console.error('Error handling email verification redirect:', error);
-        } finally {
-          setIsLoading(false);
+          navigate('/');
+        } else if (data?.session) {
+          toast({
+            title: "Email Verified",
+            description: "Your email has been successfully verified",
+          });
+          
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 500);
         }
       }
+    } catch (error) {
+      console.error('Unexpected error during email verification:', error);
+      toast({
+        title: "Verification Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Setup auth state listener
   useEffect(() => {
-    setIsLoading(true);
-
-    // Check for email verification first
     handleEmailVerificationRedirect();
 
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Fetch profile in a non-blocking way
         if (session?.user) {
           setTimeout(async () => {
             const profile = await fetchProfile(session.user.id);
@@ -160,20 +154,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoading(false);
         }
 
-        // Log auth events for audit trail
         if (event) {
           const logData = {
             event,
             user_id: session?.user?.id,
             timestamp: new Date().toISOString()
           };
-          // In production, save this to a secure audit log
           console.log('Auth event logged:', logData);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -188,7 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     });
 
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -223,7 +213,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           description: `Welcome back, ${profile?.name || data.user.email}`,
         });
         
-        // Log successful login for audit
         console.log('User logged in:', {
           user_id: data.user.id,
           email: data.user.email,
@@ -252,7 +241,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Register the user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -283,7 +271,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             : "Your account has been created and is pending admin approval.",
         });
         
-        // Log successful registration for audit
         console.log('User registered:', {
           user_id: data.user.id,
           email: data.user.email,
@@ -313,7 +300,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Log the logout event for audit
       if (user) {
         console.log('User logging out:', {
           user_id: user.id,
@@ -351,7 +337,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Role-based helper properties
   const isAdmin = profile?.role === 'admin';
   const isFaculty = profile?.role === 'faculty';
   const isStudent = profile?.role === 'student';
