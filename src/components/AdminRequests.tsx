@@ -15,11 +15,11 @@ interface AdminRequest {
   user_id: string;
   status: string;
   created_at: string;
-  profiles: {
+  profiles?: {
     name: string;
     email: string;
     role: string;
-  };
+  } | null;
 }
 
 const AdminRequests = () => {
@@ -32,17 +32,40 @@ const AdminRequests = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First, get all admin requests
+      const { data: adminRequests, error: requestsError } = await supabase
         .from('admin_requests')
-        .select(`
-          *,
-          profiles:profiles(name, email, role)
-        `)
+        .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setRequests(data as AdminRequest[]);
+      if (requestsError) throw requestsError;
+
+      // Then fetch user profiles separately for each request
+      const requestsWithProfiles: AdminRequest[] = [];
+      
+      for (const request of adminRequests) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('name, email, role')
+          .eq('id', request.user_id)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching profile for user', request.user_id, profileError);
+          requestsWithProfiles.push({
+            ...request,
+            profiles: null
+          });
+        } else {
+          requestsWithProfiles.push({
+            ...request,
+            profiles: profileData
+          });
+        }
+      }
+
+      setRequests(requestsWithProfiles);
     } catch (error) {
       console.error('Error fetching admin requests:', error);
       toast({
@@ -134,10 +157,10 @@ const AdminRequests = () => {
                     <AvatarFallback><User size={18} /></AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{request.profiles.name}</p>
-                    <p className="text-sm text-muted-foreground">{request.profiles.email}</p>
+                    <p className="font-medium">{request.profiles?.name || 'Unknown User'}</p>
+                    <p className="text-sm text-muted-foreground">{request.profiles?.email || 'No Email'}</p>
                     <Badge variant="outline" className="mt-1">
-                      {request.profiles.role}
+                      {request.profiles?.role || 'Unknown Role'}
                     </Badge>
                   </div>
                 </div>
