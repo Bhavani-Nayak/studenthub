@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -86,9 +85,61 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Handle email verification redirects
+  const handleEmailVerificationRedirect = async () => {
+    // Check if this is a redirect after email verification
+    const url = new URL(window.location.href);
+    const accessToken = url.searchParams.get('access_token');
+    const refreshToken = url.searchParams.get('refresh_token');
+    const type = url.searchParams.get('type');
+    
+    if (type === 'email_change' || type === 'signup' || type === 'recovery') {
+      setIsLoading(true);
+      
+      if (accessToken && refreshToken) {
+        try {
+          // Exchange the tokens for a session
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Error setting session after email verification:', error);
+            toast({
+              title: "Verification error",
+              description: error.message,
+              variant: "destructive",
+            });
+          } else if (data?.session) {
+            toast({
+              title: "Email verified",
+              description: "Your email has been verified successfully",
+            });
+            
+            // Clear URL parameters to avoid issues on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Redirect to dashboard after short delay to allow session to propagate
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 500);
+          }
+        } catch (error) {
+          console.error('Error handling email verification redirect:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }
+  };
+
   // Setup auth state listener
   useEffect(() => {
     setIsLoading(true);
+
+    // Check for email verification first
+    handleEmailVerificationRedirect();
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -141,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
