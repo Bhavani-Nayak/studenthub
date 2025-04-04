@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
@@ -30,6 +29,14 @@ interface SidebarItemProps {
   href: string;
   active: boolean;
   onClick?: () => void;
+  badge?: number | string;
+}
+
+interface MenuItem {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  roles: string[];
   badge?: number | string;
 }
 
@@ -79,12 +86,11 @@ const Sidebar: React.FC = () => {
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => isMobile && setIsOpen(false);
 
-  // Role-based menu items
-  const commonItems = [
+  const commonItems: MenuItem[] = [
     { icon: Home, label: 'Dashboard', href: '/dashboard', roles: ['admin', 'faculty', 'student'] },
   ];
 
-  const adminItems = [
+  const adminItems: MenuItem[] = [
     { icon: Users, label: 'User Management', href: '/users', roles: ['admin'], badge: 3 },
     { icon: BookOpen, label: 'Courses', href: '/courses', roles: ['admin'] },
     { icon: ClipboardCheck, label: 'Attendance', href: '/attendance', roles: ['admin'] },
@@ -92,22 +98,21 @@ const Sidebar: React.FC = () => {
     { icon: Settings, label: 'Settings', href: '/settings', roles: ['admin'] },
   ];
 
-  const facultyItems = [
+  const facultyItems: MenuItem[] = [
     { icon: GraduationCap, label: 'Students', href: '/students', roles: ['faculty'] },
     { icon: BookOpen, label: 'My Courses', href: '/courses', roles: ['faculty'], badge: 3 },
     { icon: ClipboardCheck, label: 'Attendance', href: '/attendance', roles: ['faculty'] },
     { icon: BarChart3, label: 'Grades', href: '/performance', roles: ['faculty'] },
   ];
 
-  const studentItems = [
+  const studentItems: MenuItem[] = [
     { icon: BookOpen, label: 'My Courses', href: '/courses', roles: ['student'], badge: 4 },
     { icon: ClipboardCheck, label: 'Attendance', href: '/attendance', roles: ['student'] },
     { icon: BarChart3, label: 'My Grades', href: '/performance', roles: ['student'] },
     { icon: Mail, label: 'Messages', href: '/messages', roles: ['student'], badge: 2 },
   ];
 
-  // Combine items based on user role
-  let menuItems = [...commonItems];
+  let menuItems: MenuItem[] = [...commonItems];
   
   if (isAdmin) {
     menuItems = [...menuItems, ...adminItems];
@@ -117,7 +122,6 @@ const Sidebar: React.FC = () => {
     menuItems = [...menuItems, ...studentItems];
   }
 
-  // Filter items by role
   const filteredItems = menuItems.filter(item => item.roles.includes(profile.role));
 
   return (

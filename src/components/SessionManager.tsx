@@ -21,7 +21,8 @@ const SessionManager = () => {
   useEffect(() => {
     if (!session) return;
     
-    const startTime = new Date(session.created_at).getTime();
+    // Use session creation time or current time as fallback
+    const startTime = new Date().getTime();
     
     const timer = setInterval(() => {
       const now = Date.now();

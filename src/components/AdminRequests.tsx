@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle, XCircle, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Database } from '@/integrations/supabase/types';
 
 interface AdminRequest {
   id: string;
