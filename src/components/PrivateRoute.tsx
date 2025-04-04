@@ -1,11 +1,13 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { UserRole } from './AuthContext';
 import DashboardLayout from './DashboardLayout';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -13,15 +15,40 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => {
-  const { user, profile, isAuthenticated, isLoading } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, refreshProfile } = useAuth();
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const navigate = useNavigate();
+
+  // Automatically attempt to refresh the profile when the component mounts
+  // or when user is authenticated but profile is missing
+  useEffect(() => {
+    let timeoutId: number | undefined;
+    
+    if (isAuthenticated && !profile && !isLoading && retryCount < 3) {
+      timeoutId = window.setTimeout(async () => {
+        console.log('Automatically retrying profile fetch, attempt:', retryCount + 1);
+        setIsRetrying(true);
+        await refreshProfile();
+        setIsRetrying(false);
+        setRetryCount(prev => prev + 1);
+      }, 1000); // Wait 1 second between retries
+    }
+    
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [isAuthenticated, profile, isLoading, retryCount, refreshProfile]);
 
   // Show loading state while auth is being checked
-  if (isLoading) {
+  if (isLoading || isRetrying) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Verifying your access...</p>
+          <p className="text-muted-foreground">
+            {isRetrying ? 'Retrying profile load...' : 'Verifying your access...'}
+          </p>
         </div>
       </div>
     );
@@ -37,8 +64,33 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = []
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Alert className="max-w-md">
-          <AlertDescription>
-            Unable to load your profile. Please try refreshing the page or contact support.
+          <AlertDescription className="py-2">
+            <p className="mb-4">Unable to load your profile. This can happen after email verification or if your account is new.</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-between mt-2">
+              <Button 
+                onClick={async () => {
+                  setIsRetrying(true);
+                  await refreshProfile();
+                  setIsRetrying(false);
+                  if (!profile) {
+                    toast({
+                      title: "Profile refresh failed",
+                      description: "Please try again or logout and login",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <RefreshCcw className="h-4 w-4" /> Refresh Profile
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')}
+              >
+                Return to Login
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       </div>
