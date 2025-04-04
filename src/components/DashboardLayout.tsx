@@ -5,6 +5,8 @@ import Sidebar from './Sidebar';
 import { Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import SessionManager from './SessionManager';
+import { Loader2 } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,16 +17,40 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children, 
   requiredRoles = ['admin', 'faculty', 'student'] 
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, isLoading } = useAuth();
   const isMobile = useIsMobile();
+  
+  // If still loading, show a loading indicator
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
   
+  // If profile is not loaded yet, show a loading indicator
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+  
   // Check if user has required role
-  if (user && !requiredRoles.includes(user.role)) {
+  if (requiredRoles.length > 0 && !requiredRoles.includes(profile.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="max-w-md text-center p-8">
@@ -49,6 +75,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       )}>
         <div className="container mx-auto p-6 animate-fade-in">
           {children}
+          
+          {/* Session Management */}
+          <div className={cn(
+            "fixed bottom-4 right-4 z-50 w-64",
+            isMobile ? "sm:right-4" : "right-4"
+          )}>
+            <SessionManager />
+          </div>
         </div>
       </main>
     </div>

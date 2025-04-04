@@ -1,12 +1,16 @@
 
 import React from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { CalendarIcon, GraduationCapIcon, UsersIcon, BookOpenIcon } from 'lucide-react';
+import { CalendarIcon, GraduationCapIcon, UsersIcon, BookOpenIcon, ShieldAlertIcon, AlertCircleIcon } from 'lucide-react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import StatsCards from '@/components/dashboard/StatsCards';
 import QuickAccessCards from '@/components/dashboard/QuickAccessCards';
 import AdminCharts from '@/components/dashboard/AdminCharts';
 import StudentCharts from '@/components/dashboard/StudentCharts';
+import AdminRequests from '@/components/AdminRequests';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Mock data for the dashboard
 const OVERVIEW_STATS = {
@@ -31,28 +35,191 @@ const OVERVIEW_STATS = {
 };
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { profile, isAdmin, isFaculty, isStudent } = useAuth();
   
-  if (!user) return null;
+  if (!profile) return null;
+
+  // Check if the user is waiting for admin approval
+  const isPending = (profile.role === 'faculty' || profile.role === 'student');
   
   // Get the appropriate stats based on user role
-  const stats = OVERVIEW_STATS[user.role] || OVERVIEW_STATS.student;
+  const stats = OVERVIEW_STATS[profile.role] || OVERVIEW_STATS.student;
 
   return (
-    <div className="container mx-auto py-6">
-      <DashboardHeader title="Dashboard" />
+    <div className="container mx-auto py-6 space-y-6">
+      <DashboardHeader title={`${profile.role.charAt(0).toUpperCase() + profile.role.slice(1)} Dashboard`} />
+      
+      {/* Admin Requests Panel (Admin Only) */}
+      {isAdmin && <AdminRequests />}
       
       {/* Overview Cards */}
       <StatsCards stats={stats} />
       
-      {/* Quick Access Cards */}
-      <QuickAccessCards />
+      {/* Role-specific content */}
+      {isAdmin && (
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="courses">Course Management</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <AdminCharts />
+            <QuickAccessCards />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Manage users, roles, and permissions. View the Users page for detailed management options.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="courses">
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Configure courses, assign faculty, and manage schedules.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Generate and view reports on attendance, academic performance, and other metrics.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
       
-      {/* Charts - Only show detailed analytics for admin and faculty */}
-      {(user.role === 'admin' || user.role === 'faculty') && <AdminCharts />}
+      {isFaculty && (
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="students">My Students</TabsTrigger>
+            <TabsTrigger value="courses">My Courses</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <AdminCharts />
+            <QuickAccessCards />
+          </TabsContent>
+
+          <TabsContent value="students">
+            <Card>
+              <CardHeader>
+                <CardTitle>Student Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View and manage students enrolled in your courses.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="courses">
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Materials</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Manage course materials, assignments, and grades.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="attendance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Attendance Tracking</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Mark and review student attendance for your courses.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
       
-      {/* For student role, show a different view */}
-      {user.role === 'student' && <StudentCharts />}
+      {isStudent && (
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="courses">My Courses</TabsTrigger>
+            <TabsTrigger value="grades">My Grades</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <StudentCharts />
+            <QuickAccessCards />
+          </TabsContent>
+
+          <TabsContent value="courses">
+            <Card>
+              <CardHeader>
+                <CardTitle>Enrolled Courses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View details about courses you're enrolled in.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="grades">
+            <Card>
+              <CardHeader>
+                <CardTitle>Academic Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View your grades and academic progress.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule">
+            <Card>
+              <CardHeader>
+                <CardTitle>Class Schedule</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View your weekly schedule and upcoming classes.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };

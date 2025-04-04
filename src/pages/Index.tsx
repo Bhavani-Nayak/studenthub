@@ -8,29 +8,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import SignupForm from '@/components/SignupForm';
+import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const LoginForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    
-    try {
-      await login(email, password);
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    await login(email, password);
   };
 
   return (
@@ -59,6 +47,7 @@ const LoginForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -70,17 +59,25 @@ const LoginForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign in'
+            )}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-center">
           Don't have an account?{' '}
-          <Button variant="link" className="p-0" onClick={onToggleForm}>
+          <Button variant="link" className="p-0" onClick={onToggleForm} disabled={isLoading}>
             Sign up
           </Button>
         </div>
@@ -91,7 +88,7 @@ const LoginForm = ({ onToggleForm }: { onToggleForm: () => void }) => {
 
 const Index = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -103,6 +100,17 @@ const Index = () => {
   const toggleForm = () => {
     setIsLogin(!isLogin);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-slate-100 p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-slate-100 p-4">
